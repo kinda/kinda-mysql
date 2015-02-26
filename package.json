@@ -17,6 +17,6 @@
   "author": "Manuel Vila <mvila@3base.com>",
   "license": "MIT",
   "dependencies": {
-    "mysql": "^2.3.2"
+    "mysql": "^2.5.5"
   }
 }
