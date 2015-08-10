@@ -9,33 +9,36 @@ let KindaMySQL = KindaObject.extend('KindaMySQL', function() {
 
     let pool = {
       getConnection() {
-        return function(cb) {
+        return new Promise(function(resolve, reject) {
           mysqlPool.getConnection(function(err, mysqlConnection) {
-            if (err) return cb(err);
+            if (err) {
+              reject(err);
+              return;
+            }
             let connection = {
               query(sql, values) {
-                return function(queryCb) {
+                return new Promise(function(queryResolve, queryReject) {
                   mysqlConnection.query(sql, values, function(queryErr, res) {
-                    queryCb(queryErr, res);
+                    if (queryErr) queryReject(queryErr); else queryResolve(res);
                   });
-                };
+                });
               },
               format: mysql.format.bind(mysql),
               escape: mysql.escape.bind(mysql),
               escapeId: mysql.escapeId.bind(mysql),
               release: mysqlConnection.release.bind(mysqlConnection)
             };
-            cb(null, connection);
+            resolve(connection);
           });
-        };
+        });
       },
 
       query(sql, values) {
-        return function(cb) {
+        return new Promise(function(resolve, reject) {
           mysqlPool.query(sql, values, function(err, res) {
-            cb(err, res);
+            if (err) reject(err); else resolve(res);
           });
-        };
+        });
       },
 
       on: mysqlPool.on.bind(mysqlPool),
@@ -47,9 +50,11 @@ let KindaMySQL = KindaObject.extend('KindaMySQL', function() {
       escapeId: mysql.escapeId.bind(mysql),
 
       end() {
-        return function(cb) {
-          mysqlPool.end(cb);
-        };
+        return new Promise(function(resolve, reject) {
+          mysqlPool.end(function(err, res) {
+            if (err) reject(err); else resolve(res);
+          });
+        });
       }
     };
     return pool;
